@@ -11,5 +11,13 @@
             }
         ],
         "vaccine_history": []
+    },
+    {
+        "name": "Paolo",
+        "age": "8",
+        "breed": "Pug",
+        "owner_name": "Drogo",
+        "consultation_history": [],
+        "vaccine_history": []
     }
 ]
