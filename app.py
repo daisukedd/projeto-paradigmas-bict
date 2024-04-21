@@ -1,5 +1,5 @@
 import json
-from tabulate import tabulate
+from terminaltables import AsciiTable
 
 # Defining the filename for storing data
 data_file = "animals.json"
@@ -13,12 +13,12 @@ def load_data():
         return []
 
 # Function to save data to JSON file
-def save_data():
+def save_data(animals):
     with open(data_file, "w") as file:
         json.dump(animals, file, indent=4)
 
 # Function to add a new animal to the list of animals
-def add_animal(name, age, breed, owner_name):
+def add_animal(animals, name, age, breed, owner_name):
     animal = {
         "name": name,
         "age": age,
@@ -28,78 +28,84 @@ def add_animal(name, age, breed, owner_name):
         "vaccine_history": []
     }
     animals.append(animal)
-    save_data()
+    save_data(animals)
     print("Animal added successfully!")
 
 # Function to add a consultation to the consultation history of an animal
-def add_consultation(animal_name, date, description):
+def add_consultation(animals, animal_name, date, description):
+    found = False
     for animal in animals:
         if animal["name"] == animal_name:
             animal["consultation_history"].append({"date": date, "description": description})
-            save_data()
-            print("Consultation added successfully for", animal_name)
-            return
-    print("Animal not found!")
+            save_data(animals)
+            print(f"Consultation added successfully for {animal_name}")
+            found = True
+            break
+    if not found:
+        print("Animal not found!")
 
 # Function to add a vaccine to the vaccine history of an animal
-def add_vaccine(animal_name, vaccine_name, date):
+def add_vaccine(animals, animal_name, vaccine_name, date):
+    found = False
     for animal in animals:
         if animal["name"] == animal_name:
             animal["vaccine_history"].append({"vaccine_name": vaccine_name, "date": date})
-            save_data()
-            print("Vaccine added successfully for", animal_name)
-            return
-    print("Animal not found!")
+            save_data(animals)
+            print(f"Vaccine added successfully for {animal_name}")
+            found = True
+            break
+    if not found:
+        print("Animal not found!")
 
 # Function to display all animals
-def display_all_animals():
+def display_all_animals(animals):
     if not animals:
         print("No animals found.")
     else:
-        headers = ["Index", "Name"]
-        animals_table = [[index + 1, animal["name"]] for index, animal in enumerate(animals)]
-        print(tabulate(animals_table, headers=headers, tablefmt="grid"))
+        table_data = [['Index', 'Name']] + [[index + 1, animal["name"]] for index, animal in enumerate(animals)]
+        table = AsciiTable(table_data)
+        print(table.table)
 
 # Function to display detailed information of a specific animal
-def display_animal_details(animal_index):
-    animal = animals[animal_index]
-    headers = ["Attribute", "Value"]
+def display_animal_details(animal):
+    headers = ['Attribute', 'Value']
     animal_data = [
-        ["Animal", animal["name"]],
-        ["Age", animal["age"]],
-        ["Breed", animal["breed"]],
-        ["Owner Name", animal["owner_name"]]
+        ['Animal', animal['name']],
+        ['Age', animal['age']],
+        ['Breed', animal['breed']],
+        ['Owner Name', animal['owner_name']]
     ]
-    consultation_history = [[consultation["date"], consultation["description"]] for consultation in animal["consultation_history"]]
-    vaccine_history = [[vaccine["vaccine_name"], vaccine["date"]] for vaccine in animal["vaccine_history"]]
+    consultation_history = [['Date', 'Description']] + [[consultation['date'], consultation['description']] for consultation in animal['consultation_history']]
+    vaccine_history = [['Vaccine Name', 'Date']] + [[vaccine['vaccine_name'], vaccine['date']] for vaccine in animal['vaccine_history']]
+
     print("\nAnimal Details:")
-    print(tabulate(animal_data, headers=headers, tablefmt="grid"))
+    print(AsciiTable(animal_data, 'Animal Details').table)
     print("\nConsultation History:")
-    if consultation_history:
-        print(tabulate(consultation_history, headers=["Date", "Description"], tablefmt="grid"))
+    if len(consultation_history) > 1:
+        print(AsciiTable(consultation_history, 'Consultation History').table)
     else:
         print("No consultation history available.")
     print("\nVaccine History:")
-    if vaccine_history:
-        print(tabulate(vaccine_history, headers=["Vaccine Name", "Date"], tablefmt="grid"))
+    if len(vaccine_history) > 1:
+        print(AsciiTable(vaccine_history, 'Vaccine History').table)
     else:
         print("No vaccine history available.")
 
 # Main function
 def main():
-    global animals
     animals = load_data()
 
     while True:
         print("\n### Veterinary Clinic Management System ###")
         menu_options = [
-            ["1", "Add Animal"],
-            ["2", "Add Consultation"],
-            ["3", "Add Vaccine"],
-            ["4", "Show All Animals"],
-            ["5", "Exit"]
+            ['1', 'Add Animal'],
+            ['2', 'Add Consultation'],
+            ['3', 'Add Vaccine'],
+            ['4', 'Show All Animals'],
+            ['5', 'Exit']
         ]
-        print(tabulate(menu_options, headers=["Option", "Description"], tablefmt="grid"))
+        menu_table = AsciiTable(menu_options, 'Menu Options')
+        print(menu_table.table)
 
         option = input("Choose an option: ")
 
@@ -108,22 +114,22 @@ def main():
             age = input("Animal age: ")
             breed = input("Animal breed: ")
             owner_name = input("Owner name: ")
-            add_animal(name, age, breed, owner_name)
+            add_animal(animals, name, age, breed, owner_name)
         elif option == "2":
             animal_name = input("Animal name: ")
             date = input("Consultation date (dd/mm/yyyy): ")
             description = input("Consultation description: ")
-            add_consultation(animal_name, date, description)
+            add_consultation(animals, animal_name, date, description)
         elif option == "3":
             animal_name = input("Animal name: ")
             vaccine_name = input("Vaccine name: ")
             date = input("Date of application (dd/mm/yyyy): ")
-            add_vaccine(animal_name, vaccine_name, date)
+            add_vaccine(animals, animal_name, vaccine_name, date)
         elif option == "4":
-            display_all_animals()
+            display_all_animals(animals)
             animal_index = int(input("Enter the number of the animal to view details (0 to cancel): ")) - 1
             if 0 <= animal_index < len(animals):
-                display_animal_details(animal_index)
+                display_animal_details(animals[animal_index])
         elif option == "5":
             print("Exiting the program...")
             break
